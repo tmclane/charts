@@ -55,6 +55,14 @@ spec:
               port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - mountPath: /etc/pihole
+              subPath: etc-pihole
+              name: data
+            - mountPath: /etc/dnsmasq.d
+              subPath: etc-dnsmasq.d
+              name: data
+
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -67,3 +75,7 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "pihole.fullname" . }}
