@@ -1,0 +1,131 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "plex-media-server.fullname" . }}
+  labels:
+    {{- include "plex-media-server.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "plex-media-server.selectorLabels" . | nindent 6 }}
+  priorityClassName: high-priority
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "plex-media-server.selectorLabels" . | nindent 8 }}
+    spec:
+      hostNetwork: true
+      hostName: plex
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "plex-media-server.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: {{ .Values.timezone | default "US/Central" | quote }}
+            - name: VERSION
+              value: docker
+            - name: HOSTNAME
+              value: chateau
+          ports:
+            - name: pms
+              containerPort: 32400
+              protocol: TCP
+            {{- if .Values.service.components.DLNA.enabled }}
+            - name: pms-dlna-udp
+              containerPort: 1900
+              protocol: UDP
+            - name: pms-dlna-tcp
+              containerPort: 32469
+              protocol: TCP
+            {{- end }}
+            {{- if .Values.service.components.homeTheater.enabled }}
+            - name: home-theater
+              containerPort: 3005
+              protocol: TCP
+            {{- end }}
+            {{- if .Values.service.components.bonjour.enabled }}
+            - name: bonjour
+              containerPort: 5353
+              protocol: UDP
+            {{- end }}
+            {{- if .Values.service.components.roku.enabled }}
+            - name: roku
+              containerPort: 8324
+              protocol: TCP
+            {{- end }}
+            {{- if .Values.service.components.gdm.enabled }}
+            - name: gdm-1
+              containerPort: 32410
+              protocol: UDP
+            - name: gdm-2
+              containerPort: 32412
+              protocol: UDP
+            - name: gdm-3
+              containerPort: 32413
+              protocol: UDP
+            - name: gdm-4
+              containerPort: 32414
+              protocol: UDP
+            {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /identity
+              port: pms
+            initialDelaySeconds: 10
+            timeoutSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /identity
+              port: pms
+            initialDelaySeconds: 15
+            timeoutSeconds: 5
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            {{- range .Values.hostPaths }}
+            - name: {{ .name }}
+              mountPath: {{ printf "/media/%s" .name }}
+            {{- end }}
+            - name: library
+              mountPath: /config
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        {{- range .Values.hostPaths }}
+        - name: {{ .name }}
+          hostPath:
+            path: {{ .path }}
+            type: Directory
+        {{- end }}
+        - name: library
+          persistentVolumeClaim:
+            claimName: plex-library

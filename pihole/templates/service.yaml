@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "pihole.fullname" . }}
+  labels:
+    {{- include "pihole.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - name: dns-tcp
+      targetPort: 53
+      protocol: TCP
+      port: 53
+    - name: dns-udp
+      targetPort: 53
+      port: 53
+      protocol: UDP
+  selector:
+    {{- include "pihole.selectorLabels" . | nindent 4 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "pihole.fullname" . }}-http
+  labels:
+    {{- include "pihole.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "pihole.selectorLabels" . | nindent 4 }}
