@@ -6,18 +6,4 @@ metadata:
 {{ include "frigate.labels" . | indent 4 }}
 data:
   config.yml: |
-    mqtt:
-      host: {{ .Values.mqtt.host }}
-      port: {{ .Values.mqtt.port }}
-
-    detectors:
-      cpu1:
-        type: cpu
-        num_threads: 1
-
-    ffmpeg:
-      output_args:
-        detect: -f rawvideo -pix_fmt yuv420p
-
-    database:
-      path: /db/frigate.db
+{{ .Values.config | indent 4 }}

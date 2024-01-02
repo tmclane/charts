@@ -31,6 +31,8 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          # command: ["tail"]
+          # args: ["-f", "/dev/null"]
           ports:
             {{- range .Values.service.ports }}
             - name: {{ .name }}
@@ -47,7 +49,15 @@ spec:
           #     port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-
+          volumeMounts:
+            - mountPath: /config
+              name: frigate-config
+            - mountPath: /media/frigate
+              name: data
+            - mountPath: /tmp/cache
+              name: tmp
+            - mountPath: /dev/shm
+              name: dshm
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -63,13 +73,8 @@ spec:
       volumes:
         - name: frigate-config
           configMap:
+            name: {{ include "frigate.fullname" . }}
             defaultMode: 420
-        - name: coral_tpu_1
-          hostPath:
-            path: /dev/apex_0
-        - name: intel_hwaccel
-          hostPath:
-            path: /dev/dri/renderD128
         - name: dshm
           emptyDir:
             medium: Memory
@@ -77,4 +82,7 @@ spec:
         - name: tmp
           emptyDir:
             medium: Memory
-            sizeLimit: 1Gi
+            sizeLimit: 2Gi
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "frigate.fullname" . }}

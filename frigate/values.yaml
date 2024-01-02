@@ -38,6 +38,7 @@ securityContext: {}
 
 service:
   type: LoadBalancer
+  port: 5000
   ports:
     - name: http
       port: 5000
@@ -71,7 +72,6 @@ resources: {}
   # requests:
   #   cpu: 100m
   #   memory: 128Mi
-
 nodeSelector: {}
 
 tolerations: []
