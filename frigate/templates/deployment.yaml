@@ -50,9 +50,10 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
-            - mountPath: /config
+            - mountPath: /config/config.yml
               name: frigate-config
-            - mountPath: /config/frigate.db
+              subPath: config.yml
+            - mountPath: /config
               name: data
               subPath: database
             - mountPath: /config/model_cache
