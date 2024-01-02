@@ -52,10 +52,15 @@ spec:
           volumeMounts:
             - mountPath: /config
               name: frigate-config
+            - mountPath: /config/frigate.db
+              name: data
+              subPath: database
             - mountPath: /config/model_cache
-              name: model-cache
+              name: data
+              subPath: model_cache
             - mountPath: /media/frigate
               name: data
+              subPath: media
             - mountPath: /tmp/cache
               name: tmp
             - mountPath: /dev/shm
