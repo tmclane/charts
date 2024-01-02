@@ -52,6 +52,8 @@ spec:
           volumeMounts:
             - mountPath: /config
               name: frigate-config
+            - mountPath: /config/model_cache
+              name: model-cache
             - mountPath: /media/frigate
               name: data
             - mountPath: /tmp/cache
@@ -79,6 +81,10 @@ spec:
           emptyDir:
             medium: Memory
             sizeLimit: 1Gi
+        - name: model-cache
+          emptyDir:
+            medium: Memory
+            sizeLimit: 2Gi
         - name: tmp
           emptyDir:
             medium: Memory
